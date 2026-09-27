@@ -18,3 +18,10 @@ def calculate_total(items, discount_percent=0):
     discounted = subtotal * (1 - discount_percent / 100)
     total = discounted * (1 + TAX_RATE)
     return round(total, 2)
+
+
+def installment_plan(total, months):
+    """Рассрочка: сумма платежа в месяц без процентов."""
+    if months <= 0:
+        raise ValueError("months must be positive")
+    return round(total / months, 2)
