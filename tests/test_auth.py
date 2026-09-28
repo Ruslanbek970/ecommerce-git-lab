@@ -14,3 +14,13 @@ def test_login_wrong_password():
 
 def test_unknown_user():
     assert authenticate("nobody@shop.kz", "Qwerty12345", USERS) is False
+
+
+def test_too_many_attempts():
+    import pytest
+
+    from src.auth import MAX_ATTEMPTS
+
+    attempts = {"aisha@shop.kz": MAX_ATTEMPTS}
+    with pytest.raises(PermissionError):
+        authenticate("aisha@shop.kz", "Qwerty12345", USERS, attempts)
