@@ -1,8 +1,19 @@
 """Аутентификация пользователей."""
 
+import configparser
 import hashlib
+import pathlib
 
-MAX_ATTEMPTS = 5
+CONFIG_PATH = pathlib.Path(__file__).resolve().parent.parent / "config" / "security.conf"
+
+
+def _max_attempts():
+    parser = configparser.ConfigParser()
+    parser.read(CONFIG_PATH)
+    return parser.getint("password_policy", "max_login_attempts", fallback=5)
+
+
+MAX_ATTEMPTS = _max_attempts()
 
 
 def hash_password(password):
