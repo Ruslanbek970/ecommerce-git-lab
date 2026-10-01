@@ -15,6 +15,6 @@ def calculate_total(items, discount_percent=0):
     discount_percent: скидка в процентах, например 10
     """
     subtotal = cart_subtotal(items)
-    total = subtotal * (1 + TAX_RATE)
-    total = total - discount_percent
+    discounted = subtotal * (1 - discount_percent / 100)
+    total = discounted * (1 + TAX_RATE)
     return round(total, 2)
