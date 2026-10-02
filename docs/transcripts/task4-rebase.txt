@@ -1,0 +1,219 @@
+
+$ git checkout main
+Switched to branch 'main'
+Your branch is up to date with 'origin/main'.
+
+$ git pull origin main
+From https://github.com/Ruslanbek970/ecommerce-git-lab
+ * branch            main       -> FETCH_HEAD
+   7cbb865..8f32263  main       -> origin/main
+Updating 7cbb865..8f32263
+Fast-forward
+ src/auth.py        | 10 +++-------
+ tests/test_auth.py |  6 ++++++
+ 2 files changed, 9 insertions(+), 7 deletions(-)
+
+$ git checkout feature/payment
+Switched to branch 'feature/payment'
+
+$ git fetch origin
+
+$ git log --oneline --graph --all -12
+*   8f32263 Merge pull request #5 from Ruslanbek970/hotfix/auth-normalization
+|\  
+| * cccd5ff Add regression test for email normalization on login
+| * 5cc7a64 Revert "Refactor authenticate(): extract find_user() helper"
+|/  
+*   7cbb865 Merge pull request #4 from Ruslanbek970/feature/auth-refactor
+|\  
+| * bf5d28c Read max login attempts from security.conf
+| * 68e722b Refactor authenticate(): extract find_user() helper
+| * 40219b7 Add login attempt rate limiting
+* |   8a56674 Merge pull request #3 from Ruslanbek970/feature/security-rules
+|\ \  
+| * \   99eec8a Merge main into feature/security-rules: объединены требования Dev A и Dev B
+| |\ \  
+| |/ /  
+|/| |   
+* | |   e598c22 Merge pull request #2 from Ruslanbek970/feature/password-policy
+|\ \ \  
+| * | | 8d0917c Password policy: minimum length 12, digits required
+| | |/  
+| |/|   
+| | * f4cc665 Security rules: minimum length 16, special characters required
+| |/  
+
+$ git rebase main
+Rebasing (1/3)Rebasing (2/3)Auto-merging src/payment.py
+CONFLICT (content): Merge conflict in src/payment.py
+error: could not apply 66bfc6f... Support promo codes in order total
+hint: Resolve all conflicts manually, mark them as resolved with
+hint: "git add/rm <conflicted_files>", then run "git rebase --continue".
+hint: You can instead skip this commit: run "git rebase --skip".
+hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
+Could not apply 66bfc6f... Support promo codes in order total
+
+$ git status --short
+UU src/payment.py
+?? docs/
+
+$ sed -n '1,40p' src/payment.py
+"""Расчёт итоговой суммы заказа."""
+
+TAX_RATE = 0.12  # НДС, Казахстан
+
+
+def cart_subtotal(items):
+    """Сумма позиций корзины без скидки и налога."""
+    return sum(item["price"] * item["qty"] for item in items)
+
+
+PROMO_CODES = {"SHOPKZ500": 500, "WELCOME1000": 1000}
+
+
+def promo_discount(promo_code, subtotal):
+    """Скидка по промокоду в тенге, не больше суммы корзины."""
+    return min(PROMO_CODES.get(promo_code, 0), subtotal)
+
+
+def calculate_total(items, discount_percent=0, promo_code=None):
+    """Итоговая сумма заказа с учётом скидки и НДС.
+
+    items: [{"price": 1200, "qty": 2}, ...]
+    discount_percent: скидка в процентах, например 10
+    """
+    subtotal = cart_subtotal(items)
+<<<<<<< HEAD
+    discounted = subtotal * (1 - discount_percent / 100)
+    total = discounted * (1 + TAX_RATE)
+=======
+    subtotal -= promo_discount(promo_code, subtotal)
+    total = subtotal * (1 + TAX_RATE)
+    total = total - discount_percent
+>>>>>>> 66bfc6f (Support promo codes in order total)
+    return round(total, 2)
+
+
+def installment_plan(total, months):
+    """Рассрочка: сумма платежа в месяц без процентов."""
+    if months <= 0:
+        raise ValueError("months must be positive")
+
+$ sed -n '19,34p' src/payment.py
+def calculate_total(items, discount_percent=0, promo_code=None):
+    """Итоговая сумма заказа с учётом скидки и НДС.
+
+    items: [{"price": 1200, "qty": 2}, ...]
+    discount_percent: скидка в процентах, например 10
+    """
+    subtotal = cart_subtotal(items)
+    subtotal -= promo_discount(promo_code, subtotal)
+    discounted = subtotal * (1 - discount_percent / 100)
+    total = discounted * (1 + TAX_RATE)    return round(total, 2)
+
+
+def installment_plan(total, months):
+    """Рассрочка: сумма платежа в месяц без процентов."""
+    if months <= 0:
+        raise ValueError("months must be positive")
+
+$ git add src/payment.py
+
+$ git rebase --continue
+error: Terminal is dumb, but EDITOR unset
+Please supply the message using either -m or -F option.
+error: could not commit staged changes.
+
+$ git log --oneline -6
+4748f65 Add installment plan calculation
+8f32263 Merge pull request #5 from Ruslanbek970/hotfix/auth-normalization
+cccd5ff Add regression test for email normalization on login
+5cc7a64 Revert "Refactor authenticate(): extract find_user() helper"
+7cbb865 Merge pull request #4 from Ruslanbek970/feature/auth-refactor
+8a56674 Merge pull request #3 from Ruslanbek970/feature/security-rules
+
+$ python3 -m pytest -q 2>&1 | tail -3
+ERROR tests/test_payment.py
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+1 error in 0.44s
+
+$ sed -n '24,30p' src/payment.py
+    """
+    subtotal = cart_subtotal(items)
+    subtotal -= promo_discount(promo_code, subtotal)
+    discounted = subtotal * (1 - discount_percent / 100)
+    total = discounted * (1 + TAX_RATE)
+    return round(total, 2)
+
+
+$ git add src/payment.py
+
+$ GIT_EDITOR=true git rebase --continue
+[detached HEAD e342204] Support promo codes in order total
+ 1 file changed, 10 insertions(+), 1 deletion(-)
+Rebasing (3/3)                                                                                Successfully rebased and updated refs/heads/feature/payment.
+
+$ git log --oneline -6
+75492c2 Add tests for installments and promo codes
+e342204 Support promo codes in order total
+4748f65 Add installment plan calculation
+8f32263 Merge pull request #5 from Ruslanbek970/hotfix/auth-normalization
+cccd5ff Add regression test for email normalization on login
+5cc7a64 Revert "Refactor authenticate(): extract find_user() helper"
+
+$ python3 -m pytest -q 2>&1 | tail -3
+.................                                                        [100%]
+17 passed in 0.25s
+
+--- пока шёл rebase, коллега (Aidana) запушила свой коммит в ту же ветку ---
+
+$ git push --force-with-lease origin feature/payment
+To https://github.com/Ruslanbek970/ecommerce-git-lab.git
+ ! [rejected]        feature/payment -> feature/payment (stale info)
+error: failed to push some refs to 'https://github.com/Ruslanbek970/ecommerce-git-lab.git'
+
+$ git fetch origin
+From https://github.com/Ruslanbek970/ecommerce-git-lab
+   b4725c1..12945cf  feature/payment -> origin/feature/payment
+
+$ git log --oneline origin/feature/payment -2
+12945cf Add SUMMER300 promo code
+b4725c1 Add tests for installments and promo codes
+
+$ git log --oneline HEAD -2
+75492c2 Add tests for installments and promo codes
+e342204 Support promo codes in order total
+
+$ git show --stat 12945cf
+commit 12945cf61faf1485d054959d60af5cfab5e3af9c
+Author: Aidana Serik <aidana@shop.kz>
+Date:   Fri Oct 2 06:57:40 2026 +0000
+
+    Add SUMMER300 promo code
+
+ src/payment.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+$ git cherry-pick 12945cf
+Auto-merging src/payment.py
+[feature/payment 6bdaa57] Add SUMMER300 promo code
+ Author: Aidana Serik <aidana@shop.kz>
+ Date: Fri Oct 2 06:57:40 2026 +0000
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+$ python3 -m pytest -q 2>&1 | tail -2
+.................                                                        [100%]
+17 passed in 0.23s
+
+$ git push --force-with-lease origin feature/payment
+To https://github.com/Ruslanbek970/ecommerce-git-lab.git
+ + 12945cf...6bdaa57 feature/payment -> feature/payment (forced update)
+
+$ git log --oneline --graph -6
+* 6bdaa57 Add SUMMER300 promo code
+* 75492c2 Add tests for installments and promo codes
+* e342204 Support promo codes in order total
+* 4748f65 Add installment plan calculation
+*   8f32263 Merge pull request #5 from Ruslanbek970/hotfix/auth-normalization
+|\  
+| * cccd5ff Add regression test for email normalization on login

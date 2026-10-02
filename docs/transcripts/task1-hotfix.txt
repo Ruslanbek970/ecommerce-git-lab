@@ -1,0 +1,48 @@
+=== Task 1 — Emergency Production Hotfix ===
+
+$ git checkout main
+Already on 'main'
+
+$ git log --oneline -1
+3194246 Add GitHub Actions CI: build, test, lint, security check
+
+$ git checkout -b hotfix/payment-bug
+Switched to a new branch 'hotfix/payment-bug'
+
+
+$ git diff --stat
+ src/payment.py        |  4 ++--
+ tests/test_payment.py | 11 +++++++++++
+ 2 files changed, 13 insertions(+), 2 deletions(-)
+
+
+$ python3 -m pytest -q
+........                                                                 [100%]
+8 passed in 0.02s
+
+$ git add .
+
+$ git commit -q -m 'Fix payment calculation error: apply discount as percent before VAT' -m 'Скидка применялась как абсолютная сумма (total - discount_percent),
+из-за чего заказы со скидкой 10% считались почти на 9% дороже.
+Теперь скидка считается процентом от суммы корзины и применяется до НДС.
+Добавлены регрессионные тесты.' 
+
+$ git log --oneline -3
+9a2e0c7 Fix payment calculation error: apply discount as percent before VAT
+3194246 Add GitHub Actions CI: build, test, lint, security check
+f59ddb9 Add authentication module and password policy config
+
+$ python3 /tmp/demo_payment.py
+корзина: 10 000 тг, скидка 10%, НДС 12%
+ожидаемая сумма        : 10080.0
+до фикса (ветка main)  : 11190.0
+после фикса (hotfix)   : 10080.0
+
+$ git log --oneline --graph --all -6
+* 9a2e0c7 Fix payment calculation error: apply discount as percent before VAT
+| * 17f0e3a Add OAuth authorize URL builder
+| * 7759c5e Add v1.1 roadmap to README
+| * 79cbeb4 WIP: new checkout flow behind feature flag
+| * 43f2421 WIP: loyalty points module, tiers not implemented yet
+|/  
+* 3194246 Add GitHub Actions CI: build, test, lint, security check
