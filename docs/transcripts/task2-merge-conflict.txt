@@ -1,0 +1,90 @@
+
+$ git checkout main
+Switched to branch 'main'
+Your branch is up to date with 'origin/main'.
+
+$ git pull origin main
+From https://github.com/Ruslanbek970/ecommerce-git-lab
+ * branch            main       -> FETCH_HEAD
+   3d9df92..e598c22  main       -> origin/main
+Updating 3d9df92..e598c22
+Fast-forward
+ config/security.conf          |  3 ++-
+ tests/test_password_policy.py | 19 +++++++++++++++++++
+ 2 files changed, 21 insertions(+), 1 deletion(-)
+ create mode 100644 tests/test_password_policy.py
+
+$ git checkout feature/security-rules
+Switched to branch 'feature/security-rules'
+
+$ git merge main
+Auto-merging config/security.conf
+CONFLICT (content): Merge conflict in config/security.conf
+Automatic merge failed; fix conflicts and then commit the result.
+
+$ git status --short
+UU config/security.conf
+M  src/payment.py
+A  tests/test_password_policy.py
+M  tests/test_payment.py
+?? docs/
+
+$ cat config/security.conf
+[password_policy]
+<<<<<<< HEAD
+minimum_password_length = 16
+require_uppercase = false
+require_symbols = true
+=======
+minimum_password_length = 12
+require_uppercase = false
+require_numbers = true
+>>>>>>> main
+max_login_attempts = 5
+=== конфликт виден, резолвим ===
+
+$ git diff --stat
+ config/security.conf | Unmerged
+ config/security.conf | 1 +
+ 1 file changed, 1 insertion(+)
+
+$ cat config/security.conf
+[password_policy]
+minimum_password_length = 16
+require_uppercase = false
+require_numbers = true
+require_symbols = true
+max_login_attempts = 5
+
+$ python3 -m pytest -q 2>&1 | tail -3
+/usr/bin/python3: No module named pytest
+
+$ git add config/security.conf
+
+$ git commit -m 'Merge main into feature/security-rules: объединены требования Dev A и Dev B' -m 'minimum_password_length = 16 (берём строгое значение Dev B),
+require_numbers = true (требование Dev A),
+require_symbols = true (требование Dev B).
+Оба требования независимы и не исключают друг друга, поэтому в конфиге остаются оба,
+а из двух значений длины выбрано большее — оно удовлетворяет и политике Dev A.'
+[feature/security-rules 99eec8a] Merge main into feature/security-rules: объединены требования Dev A и Dev B
+
+$ git log --oneline --graph -5
+*   99eec8a Merge main into feature/security-rules: объединены требования Dev A и Dev B
+|\  
+| *   e598c22 Merge pull request #2 from Ruslanbek970/feature/password-policy
+| |\  
+| | * 8d0917c Password policy: minimum length 12, digits required
+| * |   3d9df92 Merge pull request #1 from Ruslanbek970/hotfix/payment-bug
+| |\ \  
+| | |/  
+| |/|   
+| | * 9a2e0c7 Fix payment calculation error: apply discount as percent before VAT
+| |/  
+
+$ git push origin feature/security-rules
+To https://github.com/Ruslanbek970/ecommerce-git-lab.git
+   f4cc665..99eec8a  feature/security-rules -> feature/security-rules
+
+$ python3 -m pytest -q   (после установки pytest в окружение)
+............                                                             [100%]
+12 passed in 0.18s

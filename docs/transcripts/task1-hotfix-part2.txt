@@ -1,0 +1,53 @@
+
+$ git checkout main
+Already on 'main'
+Your branch is up to date with 'origin/main'.
+
+$ git pull origin main
+From https://github.com/Ruslanbek970/ecommerce-git-lab
+ * branch            main       -> FETCH_HEAD
+   3194246..3d9df92  main       -> origin/main
+Updating 3194246..3d9df92
+Fast-forward
+ src/payment.py        |  4 ++--
+ tests/test_payment.py | 11 +++++++++++
+ 2 files changed, 13 insertions(+), 2 deletions(-)
+
+$ git log --oneline --graph -4
+*   3d9df92 Merge pull request #1 from Ruslanbek970/hotfix/payment-bug
+|\  
+| * 9a2e0c7 Fix payment calculation error: apply discount as percent before VAT
+|/  
+* 3194246 Add GitHub Actions CI: build, test, lint, security check
+* f59ddb9 Add authentication module and password policy config
+
+$ git tag -a v1.0.1 -m 'Hotfix release v1.0.1: исправлен расчёт скидки'
+
+$ git push origin v1.0.1
+To https://github.com/Ruslanbek970/ecommerce-git-lab.git
+ * [new tag]         v1.0.1 -> v1.0.1
+
+$ git checkout develop
+Switched to branch 'develop'
+
+$ git merge main -m 'Merge hotfix v1.0.1 from main into develop'
+Merge made by the 'ort' strategy.
+ src/payment.py        |  4 ++--
+ tests/test_payment.py | 11 +++++++++++
+ 2 files changed, 13 insertions(+), 2 deletions(-)
+
+$ git push origin develop
+To https://github.com/Ruslanbek970/ecommerce-git-lab.git
+   7759c5e..6e74cba  develop -> develop
+
+$ git log --oneline --graph -6
+*   6e74cba Merge hotfix v1.0.1 from main into develop
+|\  
+| *   3d9df92 Merge pull request #1 from Ruslanbek970/hotfix/payment-bug
+| |\  
+| | * 9a2e0c7 Fix payment calculation error: apply discount as percent before VAT
+| |/  
+* | 7759c5e Add v1.1 roadmap to README
+* | 79cbeb4 WIP: new checkout flow behind feature flag
+* | 43f2421 WIP: loyalty points module, tiers not implemented yet
+|/  
