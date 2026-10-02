@@ -1,0 +1,193 @@
+
+$ git checkout main
+Switched to branch 'main'
+Your branch is up to date with 'origin/main'.
+
+$ git pull origin main
+From https://github.com/Ruslanbek970/ecommerce-git-lab
+ * branch            main       -> FETCH_HEAD
+   e598c22..7cbb865  main       -> origin/main
+Updating e598c22..7cbb865
+Fast-forward
+ config/security.conf         |  3 ++-
+ src/auth.py                  | 24 ++++++++++++++++++++++--
+ tests/test_auth.py           | 10 ++++++++++
+ tests/test_security_rules.py | 19 +++++++++++++++++++
+ 4 files changed, 53 insertions(+), 3 deletions(-)
+ create mode 100644 tests/test_security_rules.py
+
+$ git log --oneline -8
+7cbb865 Merge pull request #4 from Ruslanbek970/feature/auth-refactor
+8a56674 Merge pull request #3 from Ruslanbek970/feature/security-rules
+99eec8a Merge main into feature/security-rules: объединены требования Dev A и Dev B
+e598c22 Merge pull request #2 from Ruslanbek970/feature/password-policy
+3d9df92 Merge pull request #1 from Ruslanbek970/hotfix/payment-bug
+9a2e0c7 Fix payment calculation error: apply discount as percent before VAT
+bf5d28c Read max login attempts from security.conf
+68e722b Refactor authenticate(): extract find_user() helper
+
+$ python3 $HOME/check_auth.py
+BAD
+--- жалоба из поддержки: пользователи с заглавными буквами в email не могут войти ---
+
+$ git bisect start
+
+$ git bisect bad
+
+$ git bisect good v1.0.1
+Bisecting: 4 revisions left to test after this (roughly 2 steps)
+[99eec8a1f20010e66cb1f6bd76f5657cc877bafc] Merge main into feature/security-rules: объединены требования Dev A и Dev B
+
+$ git bisect run python3 $HOME/check_auth.py
+running  'python3' '/sessions/rcw-01bbgkewh6zj69zo7yinugzq/check_auth.py'
+GOOD
+Bisecting: 2 revisions left to test after this (roughly 1 step)
+[68e722b730107b57e3f5825b5d5bcb53a807d16e] Refactor authenticate(): extract find_user() helper
+running  'python3' '/sessions/rcw-01bbgkewh6zj69zo7yinugzq/check_auth.py'
+BAD
+Bisecting: 0 revisions left to test after this (roughly 0 steps)
+[40219b7f9b990a1ed70e693e321cf50817c967c4] Add login attempt rate limiting
+running  'python3' '/sessions/rcw-01bbgkewh6zj69zo7yinugzq/check_auth.py'
+GOOD
+68e722b730107b57e3f5825b5d5bcb53a807d16e is the first bad commit
+commit 68e722b730107b57e3f5825b5d5bcb53a807d16e
+Author: Junior Dev <junior@shop.kz>
+Date:   Tue Sep 29 14:05:00 2026 +0500
+
+    Refactor authenticate(): extract find_user() helper
+
+ src/auth.py | 10 +++++++---
+ 1 file changed, 7 insertions(+), 3 deletions(-)
+bisect found first bad commit
+$ git bisect log
+git bisect start
+# bad: [7cbb865a4ded10d8923e1a5ff7c8d6b203c912ba] Merge pull request #4 from Ruslanbek970/feature/auth-refactor
+git bisect bad 7cbb865a4ded10d8923e1a5ff7c8d6b203c912ba
+# good: [3d9df9210ca10b93af8f93638a7db19057b04084] Merge pull request #1 from Ruslanbek970/hotfix/payment-bug
+git bisect good 3d9df9210ca10b93af8f93638a7db19057b04084
+# good: [99eec8a1f20010e66cb1f6bd76f5657cc877bafc] Merge main into feature/security-rules: объединены требования Dev A и Dev B
+git bisect good 99eec8a1f20010e66cb1f6bd76f5657cc877bafc
+# bad: [68e722b730107b57e3f5825b5d5bcb53a807d16e] Refactor authenticate(): extract find_user() helper
+git bisect bad 68e722b730107b57e3f5825b5d5bcb53a807d16e
+# good: [40219b7f9b990a1ed70e693e321cf50817c967c4] Add login attempt rate limiting
+git bisect good 40219b7f9b990a1ed70e693e321cf50817c967c4
+# first bad commit: [68e722b730107b57e3f5825b5d5bcb53a807d16e] Refactor authenticate(): extract find_user() helper
+
+$ git bisect reset
+Previous HEAD position was 40219b7 Add login attempt rate limiting
+Switched to branch 'main'
+Your branch is up to date with 'origin/main'.
+
+$ git show --stat 68e722b
+commit 68e722b730107b57e3f5825b5d5bcb53a807d16e
+Author: Junior Dev <junior@shop.kz>
+Date:   Tue Sep 29 14:05:00 2026 +0500
+
+    Refactor authenticate(): extract find_user() helper
+
+ src/auth.py | 10 +++++++---
+ 1 file changed, 7 insertions(+), 3 deletions(-)
+
+$ git show 68e722b -- src/auth.py | head -60
+commit 68e722b730107b57e3f5825b5d5bcb53a807d16e
+Author: Junior Dev <junior@shop.kz>
+Date:   Tue Sep 29 14:05:00 2026 +0500
+
+    Refactor authenticate(): extract find_user() helper
+
+diff --git a/src/auth.py b/src/auth.py
+index ea9b591..0b31e03 100644
+--- a/src/auth.py
++++ b/src/auth.py
+@@ -13,12 +13,16 @@ def normalize_email(email):
+     return email.strip().lower()
+ 
+ 
++def find_user(email, users):
++    """Ищет пользователя по email."""
++    return users.get(email)
++
++
+ def authenticate(email, password, users, attempts=None):
+     """Проверяет логин и пароль. users: {email: password_hash}."""
+-    key = normalize_email(email)
+-    if attempts is not None and attempts.get(key, 0) >= MAX_ATTEMPTS:
++    if attempts is not None and attempts.get(email, 0) >= MAX_ATTEMPTS:
+         raise PermissionError("too many login attempts")
+-    stored = users.get(key)
++    stored = find_user(email, users)
+     if stored is None:
+         return False
+     return stored == hash_password(password)
+
+$ git log -1 --format='Автор: %an <%ae>%nДата:  %ad%nКоммит: %H' --date=iso 68e722b
+Автор: Junior Dev <junior@shop.kz>
+Дата:  2026-09-29 14:05:00 +0500
+Коммит: 68e722b730107b57e3f5825b5d5bcb53a807d16e
+
+$ git checkout -b hotfix/auth-normalization
+Switched to a new branch 'hotfix/auth-normalization'
+
+$ git revert --no-edit 68e722b
+Auto-merging src/auth.py
+[hotfix/auth-normalization 5cc7a64] Revert "Refactor authenticate(): extract find_user() helper"
+ Date: Fri Oct 2 06:53:07 2026 +0000
+ 1 file changed, 3 insertions(+), 7 deletions(-)
+
+$ cat src/auth.py | sed -n '1,40p'
+"""Аутентификация пользователей."""
+
+import configparser
+import hashlib
+import pathlib
+
+CONFIG_PATH = pathlib.Path(__file__).resolve().parent.parent / "config" / "security.conf"
+
+
+def _max_attempts():
+    parser = configparser.ConfigParser()
+    parser.read(CONFIG_PATH)
+    return parser.getint("password_policy", "max_login_attempts", fallback=5)
+
+
+MAX_ATTEMPTS = _max_attempts()
+
+
+def hash_password(password):
+    return hashlib.sha256(password.encode("utf-8")).hexdigest()
+
+
+def normalize_email(email):
+    return email.strip().lower()
+
+
+def authenticate(email, password, users, attempts=None):
+    """Проверяет логин и пароль. users: {email: password_hash}."""
+    key = normalize_email(email)
+    if attempts is not None and attempts.get(key, 0) >= MAX_ATTEMPTS:
+        raise PermissionError("too many login attempts")
+    stored = users.get(key)
+    if stored is None:
+        return False
+    return stored == hash_password(password)
+
+$ python3 $HOME/check_auth.py
+GOOD
+
+$ python3 -m pytest -q 2>&1 | tail -3
+..............                                                           [100%]
+14 passed in 0.33s
+
+$ git add tests/test_auth.py
+
+$ git commit -m 'Add regression test for email normalization on login'
+[hotfix/auth-normalization cccd5ff] Add regression test for email normalization on login
+ 1 file changed, 6 insertions(+)
+
+$ git push origin hotfix/auth-normalization
+remote: 
+remote: Create a pull request for 'hotfix/auth-normalization' on GitHub by visiting:        
+remote:      https://github.com/Ruslanbek970/ecommerce-git-lab/pull/new/hotfix/auth-normalization        
+remote: 
+To https://github.com/Ruslanbek970/ecommerce-git-lab.git
+ * [new branch]      hotfix/auth-normalization -> hotfix/auth-normalization
