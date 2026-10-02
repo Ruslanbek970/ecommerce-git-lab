@@ -8,7 +8,7 @@ def cart_subtotal(items):
     return sum(item["price"] * item["qty"] for item in items)
 
 
-PROMO_CODES = {"SHOPKZ500": 500, "WELCOME1000": 1000}
+PROMO_CODES = {"SHOPKZ500": 500, "WELCOME1000": 1000, "SUMMER300": 300}
 
 
 def promo_discount(promo_code, subtotal):
